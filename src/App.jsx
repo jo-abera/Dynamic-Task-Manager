@@ -1,122 +1,105 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import TaskForm from "./components/TaskForm";
+import TaskFilter from "./components/TaskFilter";
+import TaskList from "./components/TaskList";
 
-function App() {
-  const [count, setCount] = useState(0)
+let nextId = 5;
+
+const STARTER_TASKS = [
+  { id: 1, text: "Learn React components", completed: true, priority: "low" },
+  { id: 2, text: "Practice JSX", completed: true, priority: "low" },
+  { id: 3, text: "Build a small project", completed: false, priority: "medium" },
+  { id: 4, text: "Push the project to GitHub", completed: false, priority: "high" },
+];
+
+export default function App() {
+  // The three pieces of state the assignment asks for: the task
+  // collection and the selected filter live here. (The current input
+  // text lives inside TaskForm, closer to where it's used.)
+  const [tasks, setTasks] = useState(STARTER_TASKS);
+  const [filter, setFilter] = useState("All");
+
+  function addTask(text, priority) {
+    setTasks((prev) => [
+      ...prev,
+      { id: nextId++, text, completed: false, priority },
+    ]);
+  }
+
+  function toggleTask(id) {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  }
+
+  function deleteTask(id) {
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  }
+
+  function clearCompleted() {
+    setTasks((prev) => prev.filter((task) => !task.completed));
+  }
+
+  function resetAll() {
+    setTasks([]);
+  }
+
+  const totalCount = tasks.length;
+  const completedCount = tasks.filter((task) => task.completed).length;
+  const activeCount = totalCount - completedCount;
+
+  const visibleTasks = tasks.filter((task) => {
+    if (filter === "Completed") return task.completed;
+    if (filter === "Not Completed") return !task.completed;
+    return true;
+  });
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
+    <div className="app">
+      <header className="app__header">
         <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+          <h1 className="app__title">Task Manager</h1>
+          <p className="app__subtitle">Keep today's work in one place.</p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        {totalCount > 0 && (
+          <button type="button" className="app__reset" onClick={resetAll}>
+            Reset all
+          </button>
+        )}
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <section className="stats" aria-label="Task statistics">
+        <div className="stats__card">
+          <span className="stats__value">{totalCount}</span>
+          <span className="stats__label">Total</span>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+        <div className="stats__card">
+          <span className="stats__value stats__value--completed">{completedCount}</span>
+          <span className="stats__label">Completed</span>
+        </div>
+        <div className="stats__card">
+          <span className="stats__value stats__value--active">{activeCount}</span>
+          <span className="stats__label">Active</span>
         </div>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <TaskForm onAddTask={addTask} />
+
+      <TaskFilter
+        filter={filter}
+        onFilterChange={setFilter}
+        completedCount={completedCount}
+        onClearCompleted={clearCompleted}
+      />
+
+      <TaskList
+        tasks={visibleTasks}
+        filter={filter}
+        onToggle={toggleTask}
+        onDelete={deleteTask}
+      />
+    </div>
+  );
 }
-
-export default App
